@@ -1,0 +1,55 @@
+name: Build Linux Kernel for Apple A10
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      ARCH: arm64
+      CROSS_COMPILE: aarch64-linux-gnu-
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up dependencies
+        run: sudo apt-get update && sudo apt-get install -y \
+          qemu-user-static \
+          gcc-aarch64-linux-gnu \
+          bison \
+          flex \
+          libssl-dev \
+          bc
+
+      - name: Download Linux kernel source
+        run: git clone --depth 1 --branch v6.1 https://github.com/torvalds/linux.git
+
+      - name: Copy A10 defconfig
+        run: |
+          cd linux
+          cp ../a10_defconfig arch/arm64/configs/
+
+      - name: Configure kernel
+        run: |
+          cd linux
+          make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE a10_defconfig
+          make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE menuconfig
+
+      - name: Compile kernel
+        run: |
+          cd linux
+          make -j$(nproc) ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE
+
+      - name: Upload compiled kernel
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-kernel
+          path: linux/arch/arm64/boot/Image
