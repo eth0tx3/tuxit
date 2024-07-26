@@ -20,24 +20,75 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Set up repositories
+      - name: Set up dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y software-properties-common
-          sudo add-apt-repository universe
-          sudo add-apt-repository multiverse
-          sudo add-apt-repository main
-          sudo add-apt-repository restricted
-          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            wget \
+            curl \
+            git \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libelf-dev \
+            libssl-dev
 
-      - name: Set up dependencies
-        run: sudo apt-get install -y \
-          qemu-user-static \
-          gcc-aarch64-linux-gnu \
-          bison \
-          flex \
-          libssl-dev \
-          bc
+      - name: Install qemu-user-static from source
+        run: |
+          git clone https://gitlab.com/qemu-project/qemu.git
+          cd qemu
+          ./configure --static --target-list=aarch64-linux-user
+          make -j$(nproc)
+          sudo make install
+          cd ..
+
+      - name: Install gcc-aarch64-linux-gnu from source
+        run: |
+          wget https://ftp.gnu.org/gnu/gcc/gcc-10.2.0/gcc-10.2.0.tar.gz
+          tar -xzf gcc-10.2.0.tar.gz
+          cd gcc-10.2.0
+          ./contrib/download_prerequisites
+          mkdir build
+          cd build
+          ../configure --target=aarch64-linux-gnu --enable-languages=c,c++ --disable-multilib
+          make -j$(nproc)
+          sudo make install
+          cd ../..
+
+      - name: Install bison from source
+        run: |
+          wget https://ftp.gnu.org/gnu/bison/bison-3.7.6.tar.gz
+          tar -xzf bison-3.7.6.tar.gz
+          cd bison-3.7.6
+          ./configure
+          make -j$(nproc)
+          sudo make install
+          cd ..
+
+      - name: Install flex from source
+        run: |
+          wget https://github.com/westes/flex/files/735321/flex-2.6.4.tar.gz
+          tar -xzf flex-2.6.4.tar.gz
+          cd flex-2.6.4
+          ./configure
+          make -j$(nproc)
+          sudo make install
+          cd ..
+
+      - name: Install bc from source
+        run: |
+          wget https://ftp.gnu.org/gnu/bc/bc-1.07.1.tar.gz
+          tar -xzf bc-1.07.1.tar.gz
+          cd bc-1.07.1
+          ./configure
+          make -j$(nproc)
+          sudo make install
+          cd ..
 
       - name: Download Linux kernel source
         run: git clone --depth 1 --branch v6.1 https://github.com/torvalds/linux.git
