@@ -20,8 +20,16 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
+      - name: Set up repositories
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository universe
+          sudo add-apt-repository multiverse
+          sudo apt-get update
+
       - name: Set up dependencies
-        run: sudo apt-get update && sudo apt-get install -y \
+        run: sudo apt-get install -y \
           qemu-user-static \
           gcc-aarch64-linux-gnu \
           bison \
@@ -34,8 +42,7 @@ jobs:
 
       - name: Copy A10 defconfig
         run: |
-          cd linux
-          cp ../a10_defconfig arch/arm64/configs/
+          cp a10_defconfig linux/arch/arm64/configs/a10_defconfig
 
       - name: Configure kernel
         run: |
