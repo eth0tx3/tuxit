@@ -26,6 +26,8 @@ jobs:
           sudo apt-get install -y software-properties-common
           sudo add-apt-repository universe
           sudo add-apt-repository multiverse
+          sudo add-apt-repository main
+          sudo add-apt-repository restricted
           sudo apt-get update
 
       - name: Set up dependencies
